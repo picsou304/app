@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dailyvlog.app.core.notification.NotificationHelper
 import com.dailyvlog.app.core.time.DebugClock
+import com.dailyvlog.app.domain.model.AssignmentStatus
 import com.dailyvlog.app.domain.model.DailyAssignment
 import com.dailyvlog.app.domain.model.GroupWithMembers
 import com.dailyvlog.app.domain.repository.AuthRepository
@@ -29,6 +30,8 @@ import javax.inject.Inject
 data class TodayUiState(
     val groupWithMembers: GroupWithMembers? = null,
     val assignment: DailyAssignment? = null,
+    val yesterdayAssignment: DailyAssignment? = null,
+    val isYesterdayMissed: Boolean = false,
     val currentUserId: String? = null,
     val remainingHours: Long = 0,
     val remainingMinutes: Long = 0,
@@ -81,27 +84,29 @@ class TodayViewModel @Inject constructor(
                     combine(
                         groupRepository.getGroupDetails(gid),
                         dailyAssignmentRepository.getTodayAssignment(gid),
+                        dailyAssignmentRepository.getYesterdayAssignment(gid),
                         debugClock.offsetFlow
-                    ) { groupDetails, assignment, offsetMillis ->
-                        Triple(groupDetails, assignment, offsetMillis)
+                    ) { groupDetails, assignment, yesterdayAssignment, offsetMillis ->
+                        val simulatedZdt = debugClock.currentZonedDateTime()
+                        val offsetDays = offsetMillis / (24L * 60L * 60L * 1000L)
+                        val isYMissed = yesterdayAssignment?.status == AssignmentStatus.MISSED
+
+                        _uiState.update {
+                            it.copy(
+                                groupWithMembers = groupDetails,
+                                assignment = assignment,
+                                yesterdayAssignment = yesterdayAssignment,
+                                isYesterdayMissed = isYMissed,
+                                clockOffsetDays = offsetDays,
+                                simulatedTimeString = simulatedZdt.format(timeFormatter)
+                            )
+                        }
+                        recomputeCountdownAndDesignation()
                     }
                 } else {
-                    flowOf(Triple(null, null, 0L))
+                    flowOf(Unit)
                 }
-            }.collect { (groupDetails, assignment, offsetMillis) ->
-                val simulatedZdt = debugClock.currentZonedDateTime()
-                val offsetDays = offsetMillis / (24L * 60L * 60L * 1000L)
-
-                _uiState.update {
-                    it.copy(
-                        groupWithMembers = groupDetails,
-                        assignment = assignment,
-                        clockOffsetDays = offsetDays,
-                        simulatedTimeString = simulatedZdt.format(timeFormatter)
-                    )
-                }
-                recomputeCountdownAndDesignation()
-            }
+            }.collect {}
         }
     }
 
@@ -193,6 +198,23 @@ class TodayViewModel @Inject constructor(
         notificationHelper?.sendNewVlogNotification(group.id, group.name, pseudo, vlogId)
         viewModelScope.launch {
             _effects.send(TodayEffect.ShowToast("Notification envoyée : Nouveau vlog !"))
+        }
+    }
+
+    fun simulateMissedDay() {
+        val gid = _groupId.value ?: return
+        viewModelScope.launch {
+            dailyAssignmentRepository.markDayMissed(gid)
+                .onSuccess { updatedAssignment ->
+                    if (updatedAssignment.status == AssignmentStatus.MISSED) {
+                        _effects.send(TodayEffect.ShowToast("Journée marquée comme ratée 😴"))
+                    } else {
+                        _effects.send(TodayEffect.ShowToast("Simulation annulée : journée active 🎬"))
+                    }
+                }
+                .onFailure {
+                    _effects.send(TodayEffect.ShowToast("Erreur lors de la simulation"))
+                }
         }
     }
 

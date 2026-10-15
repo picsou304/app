@@ -470,6 +470,7 @@ fun AppRoot(
                 onTestTurnNotification = { todayViewModel.sendTestTurnNotification() },
                 onTestReminderNotification = { todayViewModel.sendTestReminderNotification() },
                 onTestNewVlogNotification = { todayViewModel.sendTestNewVlogNotification() },
+                onSimulateMissedDay = { todayViewModel.simulateMissedDay() },
                 onBack = { navController.popBackStack() }
             )
         }

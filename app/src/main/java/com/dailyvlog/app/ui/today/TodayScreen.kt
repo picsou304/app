@@ -79,6 +79,7 @@ fun TodayScreen(
     onTestTurnNotification: () -> Unit = {},
     onTestReminderNotification: () -> Unit = {},
     onTestNewVlogNotification: () -> Unit = {},
+    onSimulateMissedDay: () -> Unit = {},
     onBack: () -> Unit
 ) {
     var showSkipDialog by remember { mutableStateOf(false) }
@@ -211,6 +212,44 @@ fun TodayScreen(
             }
 
             Spacer(modifier = Modifier.height(20.dp))
+
+            // Yesterday Missed Card (if yesterday passed without a vlog)
+            if (state.isYesterdayMissed && state.yesterdayAssignment != null) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("yesterday_vlog_missed_card"),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "😴", fontSize = 32.sp)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Hier : Jour raté !",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Aucun vlog n'a été publié par @${state.yesterdayAssignment.assignedUserPseudo} hier. La streak du groupe est brisée.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // Main Assignment Card
             if (assignment.status == AssignmentStatus.POSTED) {
@@ -547,6 +586,25 @@ fun TodayScreen(
                                 .testTag("btn_test_new_vlog_notification")
                         ) {
                             Text("🎉 Notif : Nouveau vlog (Tap → Visionner)")
+                        }
+                        OutlinedButton(
+                            onClick = onSimulateMissedDay,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("btn_simulate_missed_day"),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = if (assignment?.status == AssignmentStatus.MISSED)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.error
+                            )
+                        ) {
+                            Text(
+                                if (assignment?.status == AssignmentStatus.MISSED)
+                                    "🎬 Annuler simulation jour raté"
+                                else
+                                    "😴 Simuler fin de journée sans vlog (Jour raté)"
+                            )
                         }
                     }
                 }

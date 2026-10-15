@@ -29,9 +29,11 @@ import org.junit.Test
 
 class FakeTestAssignmentRepo : DailyAssignmentRepository {
     val assignmentFlow = MutableStateFlow<DailyAssignment?>(null)
+    val yesterdayAssignmentFlow = MutableStateFlow<DailyAssignment?>(null)
     var skipResult: Result<DailyAssignment>? = null
 
     override fun getTodayAssignment(groupId: String): Flow<DailyAssignment?> = assignmentFlow
+    override fun getYesterdayAssignment(groupId: String): Flow<DailyAssignment?> = yesterdayAssignmentFlow
 
     override suspend fun skipTurn(groupId: String, userId: String): Result<DailyAssignment> {
         return skipResult ?: Result.failure(Exception("Non configuré"))
@@ -40,6 +42,13 @@ class FakeTestAssignmentRepo : DailyAssignmentRepository {
     override suspend fun markVlogPosted(groupId: String, vlogId: String): Result<DailyAssignment> {
         val current = assignmentFlow.value ?: return Result.failure(Exception())
         val updated = current.copy(status = AssignmentStatus.POSTED, vlogId = vlogId)
+        assignmentFlow.value = updated
+        return Result.success(updated)
+    }
+
+    override suspend fun markDayMissed(groupId: String): Result<DailyAssignment> {
+        val current = assignmentFlow.value ?: return Result.failure(Exception())
+        val updated = current.copy(status = AssignmentStatus.MISSED)
         assignmentFlow.value = updated
         return Result.success(updated)
     }
@@ -270,4 +279,56 @@ class TodayViewModelTest {
             assertTrue((effect as TodayEffect.ShowToast).message.contains("Nouveau vlog"))
         }
     }
+
+    @Test
+    fun `simulateMissedDay marks current day assignment as missed`() = runTest {
+        val testAssignment = DailyAssignment(
+            id = "group-1-2026-10-15",
+            groupId = "group-1",
+            date = "2026-10-15",
+            roundNumber = 1,
+            assignedUserId = "user-1",
+            assignedUserPseudo = "Alice",
+            deadlineTimestamp = System.currentTimeMillis() + 3600_000,
+            status = AssignmentStatus.PENDING
+        )
+        assignmentRepository.assignmentFlow.value = testAssignment
+
+        val viewModel = TodayViewModel(groupRepository, assignmentRepository, authRepository, debugClock)
+        viewModel.loadGroup("group-1")
+
+        viewModel.effects.test {
+            viewModel.simulateMissedDay()
+            val effect = awaitItem()
+            assertTrue(effect is TodayEffect.ShowToast)
+            assertTrue((effect as TodayEffect.ShowToast).message.contains("ratée"))
+        }
+
+        assertEquals(AssignmentStatus.MISSED, assignmentRepository.assignmentFlow.value?.status)
+    }
+
+    @Test
+    fun `yesterday assignment with MISSED status sets isYesterdayMissed to true`() = runTest {
+        val yesterdayAssignment = DailyAssignment(
+            id = "group-1-2026-10-14",
+            groupId = "group-1",
+            date = "2026-10-14",
+            roundNumber = 1,
+            assignedUserId = "user-2",
+            assignedUserPseudo = "Bob",
+            deadlineTimestamp = System.currentTimeMillis() - 3600_000,
+            status = AssignmentStatus.MISSED
+        )
+        assignmentRepository.yesterdayAssignmentFlow.value = yesterdayAssignment
+
+        val viewModel = TodayViewModel(groupRepository, assignmentRepository, authRepository, debugClock)
+        viewModel.loadGroup("group-1")
+
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertTrue(state.isYesterdayMissed)
+            assertEquals("Bob", state.yesterdayAssignment?.assignedUserPseudo)
+        }
+    }
 }
+

@@ -21,11 +21,13 @@ import org.junit.Test
 class FakeDailyAssignmentRepoForVlog : DailyAssignmentRepository {
     var markedVlogId: String? = null
     override fun getTodayAssignment(groupId: String): Flow<DailyAssignment?> = MutableStateFlow(null)
+    override fun getYesterdayAssignment(groupId: String): Flow<DailyAssignment?> = MutableStateFlow(null)
     override suspend fun skipTurn(groupId: String, userId: String): Result<DailyAssignment> = Result.failure(Exception())
     override suspend fun markVlogPosted(groupId: String, vlogId: String): Result<DailyAssignment> {
         markedVlogId = vlogId
         return Result.failure(Exception("Dummy"))
     }
+    override suspend fun markDayMissed(groupId: String): Result<DailyAssignment> = Result.failure(Exception())
 }
 
 class FakeGroupRepoForVlog : GroupRepository {

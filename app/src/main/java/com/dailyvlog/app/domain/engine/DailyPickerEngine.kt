@@ -54,7 +54,7 @@ class DailyPickerEngine {
             return deadlineDateTime.toInstant().toEpochMilli()
         }
 
-        private fun parseLocalTime(timeStr: String): LocalTime {
+        fun parseLocalTime(timeStr: String): LocalTime {
             return try {
                 LocalTime.parse(timeStr)
             } catch (_: Exception) {
@@ -62,7 +62,7 @@ class DailyPickerEngine {
             }
         }
 
-        private fun parseZoneId(zoneStr: String): ZoneId {
+        fun parseZoneId(zoneStr: String): ZoneId {
             return try {
                 ZoneId.of(zoneStr)
             } catch (_: Exception) {
