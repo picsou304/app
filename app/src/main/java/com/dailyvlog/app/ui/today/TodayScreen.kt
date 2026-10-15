@@ -76,6 +76,9 @@ fun TodayScreen(
     onAdvanceDay: () -> Unit,
     onAdvanceHour: () -> Unit,
     onResetClock: () -> Unit,
+    onTestTurnNotification: () -> Unit = {},
+    onTestReminderNotification: () -> Unit = {},
+    onTestNewVlogNotification: () -> Unit = {},
     onBack: () -> Unit
 ) {
     var showSkipDialog by remember { mutableStateOf(false) }
@@ -251,6 +254,39 @@ fun TodayScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(stringResource(R.string.btn_watch_vlog), fontWeight = FontWeight.SemiBold)
                         }
+                    }
+                }
+            } else if (assignment.status == AssignmentStatus.MISSED) {
+                // Day missed without vlog!
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("today_vlog_missed_card"),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(text = "😴", fontSize = 48.sp)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Jour raté !",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "@${assignment.assignedUserPseudo} n'a pas publié son vlog à temps. La streak du groupe est brisée !",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            textAlign = TextAlign.Center
+                        )
                     }
                 }
             } else if (state.isUserDesignated) {
@@ -474,6 +510,43 @@ fun TodayScreen(
                                 imageVector = Icons.Default.Refresh,
                                 contentDescription = stringResource(R.string.btn_reset_clock)
                             )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "🔔 Test Notifications (M6)",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Button(
+                            onClick = onTestTurnNotification,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("btn_test_turn_notification"),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.secondary
+                            )
+                        ) {
+                            Text("🎬 Notif : C'est mon tour (Tap → Enregistrer)")
+                        }
+                        OutlinedButton(
+                            onClick = onTestReminderNotification,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("btn_test_reminder_notification")
+                        ) {
+                            Text("⏰ Notif : Rappel 4h avant minuit")
+                        }
+                        OutlinedButton(
+                            onClick = onTestNewVlogNotification,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("btn_test_new_vlog_notification")
+                        ) {
+                            Text("🎉 Notif : Nouveau vlog (Tap → Visionner)")
                         }
                     }
                 }

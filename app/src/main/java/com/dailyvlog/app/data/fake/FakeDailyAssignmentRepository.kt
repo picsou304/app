@@ -62,6 +62,10 @@ class FakeDailyAssignmentRepository @Inject constructor(
                     status = AssignmentStatus.POSTED,
                     vlogId = postedVlogId
                 )
+            } else if (assignment != null && now.toEpochMilli() > assignment.deadlineTimestamp) {
+                assignment.copy(
+                    status = AssignmentStatus.MISSED
+                )
             } else {
                 assignment
             }

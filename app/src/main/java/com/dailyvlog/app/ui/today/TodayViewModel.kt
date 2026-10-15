@@ -2,6 +2,7 @@ package com.dailyvlog.app.ui.today
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dailyvlog.app.core.notification.NotificationHelper
 import com.dailyvlog.app.core.time.DebugClock
 import com.dailyvlog.app.domain.model.DailyAssignment
 import com.dailyvlog.app.domain.model.GroupWithMembers
@@ -50,7 +51,8 @@ class TodayViewModel @Inject constructor(
     private val groupRepository: GroupRepository,
     private val dailyAssignmentRepository: DailyAssignmentRepository,
     private val authRepository: AuthRepository,
-    private val debugClock: DebugClock
+    private val debugClock: DebugClock,
+    private val notificationHelper: NotificationHelper? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TodayUiState())
@@ -162,6 +164,35 @@ class TodayViewModel @Inject constructor(
         debugClock.reset()
         viewModelScope.launch {
             _effects.send(TodayEffect.ShowToast("Horloge réinitialisée à l'heure réelle"))
+        }
+    }
+
+    fun sendTestTurnNotification() {
+        val state = _uiState.value
+        val group = state.groupWithMembers?.group ?: return
+        notificationHelper?.sendTurnNotification(group.id, group.name, group.maxDurationSeconds)
+        viewModelScope.launch {
+            _effects.send(TodayEffect.ShowToast("Notification envoyée : C'est ton tour !"))
+        }
+    }
+
+    fun sendTestReminderNotification() {
+        val state = _uiState.value
+        val group = state.groupWithMembers?.group ?: return
+        notificationHelper?.sendReminderNotification(group.id, group.name)
+        viewModelScope.launch {
+            _effects.send(TodayEffect.ShowToast("Notification envoyée : Rappel 4h !"))
+        }
+    }
+
+    fun sendTestNewVlogNotification() {
+        val state = _uiState.value
+        val group = state.groupWithMembers?.group ?: return
+        val pseudo = state.assignment?.assignedUserPseudo ?: "Alice"
+        val vlogId = state.assignment?.vlogId ?: "vlog-demo"
+        notificationHelper?.sendNewVlogNotification(group.id, group.name, pseudo, vlogId)
+        viewModelScope.launch {
+            _effects.send(TodayEffect.ShowToast("Notification envoyée : Nouveau vlog !"))
         }
     }
 

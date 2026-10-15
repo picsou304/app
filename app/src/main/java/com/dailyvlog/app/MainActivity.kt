@@ -1,11 +1,18 @@
 package com.dailyvlog.app
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import com.dailyvlog.app.core.notification.NotificationHelper
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -62,27 +69,54 @@ import com.dailyvlog.app.ui.navigation.HomeRoute
 import com.dailyvlog.app.ui.navigation.JoinGroupRoute
 import com.dailyvlog.app.ui.navigation.LoginRoute
 import com.dailyvlog.app.ui.navigation.ProfileRoute
+import com.dailyvlog.app.ui.navigation.RecordVlogRoute
 import com.dailyvlog.app.ui.navigation.RegisterRoute
+import com.dailyvlog.app.ui.navigation.TodayRoute
+import com.dailyvlog.app.ui.navigation.WatchVlogRoute
 import com.dailyvlog.app.ui.navigation.WelcomeRoute
 import com.dailyvlog.app.ui.profile.ProfileScreen
 import com.dailyvlog.app.ui.theme.DailyVlogCrewTheme
 import dagger.hilt.android.AndroidEntryPoint
 
+sealed interface NotificationNavigationAction {
+    data class Record(val groupId: String, val maxDuration: Int) : NotificationNavigationAction
+    data class Watch(val groupId: String, val vlogId: String?) : NotificationNavigationAction
+    data class Today(val groupId: String) : NotificationNavigationAction
+}
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private var pendingInviteCode by mutableStateOf<String?>(null)
+    private var pendingNotificationAction by mutableStateOf<NotificationNavigationAction?>(null)
+
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { _ -> }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         handleDeepLink(intent)
+        handleNotificationIntent(intent)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
 
         setContent {
             DailyVlogCrewTheme {
                 AppRoot(
                     pendingInviteCode = pendingInviteCode,
-                    onClearPendingInviteCode = { pendingInviteCode = null }
+                    onClearPendingInviteCode = { pendingInviteCode = null },
+                    pendingNotificationAction = pendingNotificationAction,
+                    onClearPendingNotificationAction = { pendingNotificationAction = null }
                 )
             }
         }
@@ -91,6 +125,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleDeepLink(intent)
+        handleNotificationIntent(intent)
     }
 
     private fun handleDeepLink(intent: Intent?) {
@@ -102,12 +137,34 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    private fun handleNotificationIntent(intent: Intent?) {
+        val action = intent?.getStringExtra("action") ?: return
+        when (action) {
+            NotificationHelper.ACTION_OPEN_RECORD -> {
+                val groupId = intent.getStringExtra(NotificationHelper.EXTRA_GROUP_ID) ?: return
+                val maxDuration = intent.getIntExtra(NotificationHelper.EXTRA_MAX_DURATION, 60)
+                pendingNotificationAction = NotificationNavigationAction.Record(groupId, maxDuration)
+            }
+            NotificationHelper.ACTION_OPEN_WATCH -> {
+                val groupId = intent.getStringExtra(NotificationHelper.EXTRA_GROUP_ID) ?: return
+                val vlogId = intent.getStringExtra(NotificationHelper.EXTRA_VLOG_ID)
+                pendingNotificationAction = NotificationNavigationAction.Watch(groupId, vlogId)
+            }
+            NotificationHelper.ACTION_OPEN_TODAY -> {
+                val groupId = intent.getStringExtra(NotificationHelper.EXTRA_GROUP_ID) ?: return
+                pendingNotificationAction = NotificationNavigationAction.Today(groupId)
+            }
+        }
+    }
 }
 
 @Composable
 fun AppRoot(
     pendingInviteCode: String? = null,
     onClearPendingInviteCode: () -> Unit = {},
+    pendingNotificationAction: NotificationNavigationAction? = null,
+    onClearPendingNotificationAction: () -> Unit = {},
     authViewModel: AuthViewModel = hiltViewModel(),
     groupViewModel: GroupViewModel = hiltViewModel(),
     todayViewModel: com.dailyvlog.app.ui.today.TodayViewModel = hiltViewModel(),
@@ -223,6 +280,31 @@ fun AppRoot(
         if (code != null && authState is AuthUiState.Authenticated) {
             onClearPendingInviteCode()
             navController.navigate(JoinGroupRoute(prefilledCode = code))
+        }
+    }
+
+    // Handle notification click navigation when user is authenticated
+    LaunchedEffect(pendingNotificationAction, authState) {
+        val action = pendingNotificationAction
+        if (action != null && authState is AuthUiState.Authenticated) {
+            onClearPendingNotificationAction()
+            when (action) {
+                is NotificationNavigationAction.Record -> {
+                    navController.navigate(
+                        RecordVlogRoute(groupId = action.groupId, maxDurationSeconds = action.maxDuration)
+                    )
+                }
+                is NotificationNavigationAction.Watch -> {
+                    navController.navigate(
+                        WatchVlogRoute(groupId = action.groupId, vlogId = action.vlogId)
+                    )
+                }
+                is NotificationNavigationAction.Today -> {
+                    navController.navigate(
+                        TodayRoute(groupId = action.groupId)
+                    )
+                }
+            }
         }
     }
 
@@ -385,6 +467,9 @@ fun AppRoot(
                 onAdvanceDay = { todayViewModel.advanceDay() },
                 onAdvanceHour = { todayViewModel.advanceHour() },
                 onResetClock = { todayViewModel.resetClock() },
+                onTestTurnNotification = { todayViewModel.sendTestTurnNotification() },
+                onTestReminderNotification = { todayViewModel.sendTestReminderNotification() },
+                onTestNewVlogNotification = { todayViewModel.sendTestNewVlogNotification() },
                 onBack = { navController.popBackStack() }
             )
         }

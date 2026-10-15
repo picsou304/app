@@ -231,4 +231,43 @@ class TodayViewModelTest {
             assertEquals("vlog-abc-123", watchEffect.vlogId)
         }
     }
+
+    @Test
+    fun `sendTestTurnNotification emits ShowToast effect`() = runTest {
+        val viewModel = TodayViewModel(groupRepository, assignmentRepository, authRepository, debugClock)
+        viewModel.loadGroup("group-1")
+
+        viewModel.effects.test {
+            viewModel.sendTestTurnNotification()
+            val effect = awaitItem()
+            assertTrue(effect is TodayEffect.ShowToast)
+            assertTrue((effect as TodayEffect.ShowToast).message.contains("C'est ton tour"))
+        }
+    }
+
+    @Test
+    fun `sendTestReminderNotification emits ShowToast effect`() = runTest {
+        val viewModel = TodayViewModel(groupRepository, assignmentRepository, authRepository, debugClock)
+        viewModel.loadGroup("group-1")
+
+        viewModel.effects.test {
+            viewModel.sendTestReminderNotification()
+            val effect = awaitItem()
+            assertTrue(effect is TodayEffect.ShowToast)
+            assertTrue((effect as TodayEffect.ShowToast).message.contains("Rappel 4h"))
+        }
+    }
+
+    @Test
+    fun `sendTestNewVlogNotification emits ShowToast effect`() = runTest {
+        val viewModel = TodayViewModel(groupRepository, assignmentRepository, authRepository, debugClock)
+        viewModel.loadGroup("group-1")
+
+        viewModel.effects.test {
+            viewModel.sendTestNewVlogNotification()
+            val effect = awaitItem()
+            assertTrue(effect is TodayEffect.ShowToast)
+            assertTrue((effect as TodayEffect.ShowToast).message.contains("Nouveau vlog"))
+        }
+    }
 }

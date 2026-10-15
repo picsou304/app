@@ -13,8 +13,8 @@
 | **M2** | Groupes : création, code d'invitation, deep link, rôles | ✅ Validé | Tests 4, 5, 6 validés sur device physique A015 (création groupe, code 6 car., copie, invitation, adhésion) |
 | **M3** | `DailyPickerEngine` + tests unitaires + écran « Aujourd'hui » + DebugClock | ✅ Validé | Tests 7, 8, 9 validés sur device A015 (DailyPicker déterministe, pass tour, DebugClock, countdown) |
 | **M4** | Enregistrement/import vidéo, compression 720p, upload WorkManager | ✅ Validé | Validé sur A015 : bascule caméra avant/arrière, enregistrement continu 1 prise, légende, upload & publication |
-| **M5** | Fil, lecteur ExoPlayer, réactions emojis, commentaires, vu-par, streak | 🔄 À tester sur device | Lecteur immersif Media3, boucle continue, réactions emojis, commentaires, vu-par, streak calculé |
-| **M6** | Notifications, rappel 4h avant minuit, « passer mon tour », jour raté | ⏳ En attente | Pro : notification reçue, tap-through direct vers enregistrement |
+| **M5** | Fil, lecteur ExoPlayer, réactions emojis, commentaires, vu-par, streak | ✅ Validé | Validé sur A015 : lecteur immersif Media3, boucle continue, réactions emojis, commentaires, vu-par, streak calculé |
+| **M6** | Notifications, rappel 4h avant minuit, « passer mon tour », jour raté | 🔄 À tester sur device | Canaux Android 8+, permission Android 13+, tap-through direct vers enregistrement/lecteur, rappel 4h WorkManager, jour raté 😴 |
 | **M7** | Backend réel Supabase (schéma, RLS, storage) + bascule `USE_FAKE_BACKEND=false` | ⏳ En attente | Scénarios rejoués contre Supabase |
 | **M8** | Polish : états vides/erreurs/offline, accessibilité, thème sombre, APK release | ⏳ En attente | Checklist §7 100 % validée, rapport `REPORT.md` |
 
