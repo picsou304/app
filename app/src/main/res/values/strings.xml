@@ -26,4 +26,31 @@
     <string name="create_group">Créer un groupe</string>
     <string name="join_group">Rejoindre un groupe</string>
     <string name="test_accounts_hint">Comptes de test rapides : alice@test.dev ou bob@test.dev (mdp: Test1234!)</string>
+
+    <!-- Group strings -->
+    <string name="create_group_title">Nouveau groupe 🎬</string>
+    <string name="create_group_subtitle">Rassemblez vos proches pour le vlog quotidien</string>
+    <string name="group_name_label">Nom du groupe</string>
+    <string name="choose_emoji">Choisir un emoji</string>
+    <string name="switch_time_label">Heure de bascule quotidienne</string>
+    <string name="switch_time_hint">Heure où le prochain membre sera désigné</string>
+    <string name="max_duration_label">Durée max du vlog</string>
+    <string name="max_duration_seconds">%1$d secondes</string>
+    <string name="btn_create_group">Créer le groupe</string>
+    <string name="join_group_title">Rejoindre un groupe 🤝</string>
+    <string name="join_group_subtitle">Entrez le code à 6 caractères partagé par votre pote</string>
+    <string name="invite_code_label">Code d\'invitation (ex. K7QX2M)</string>
+    <string name="btn_join_group">Rejoindre</string>
+    <string name="invite_friends">Inviter des potes</string>
+    <string name="copy_code">Copier le code</string>
+    <string name="share_link">Partager le lien</string>
+    <string name="code_copied">Code copié dans le presse-papier !</string>
+    <string name="regenerate_code">Régénérer le code</string>
+    <string name="members_title">Membres (%1$d/20)</string>
+    <string name="role_admin">Admin</string>
+    <string name="role_member">Membre</string>
+    <string name="remove_member">Retirer</string>
+    <string name="leave_group">Quitter le groupe</string>
+    <string name="delete_group">Supprimer le groupe</string>
+    <string name="share_invite_text">Rejoins mon groupe \"%1$s\" sur Daily Vlog Crew : %2$s (Code : %3$s)</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.dailyvlog.app
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -22,12 +23,13 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,13 +44,22 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.dailyvlog.app.ui.auth.AuthEffect
 import com.dailyvlog.app.ui.auth.AuthUiState
 import com.dailyvlog.app.ui.auth.AuthViewModel
 import com.dailyvlog.app.ui.auth.LoginScreen
 import com.dailyvlog.app.ui.auth.RegisterScreen
+import com.dailyvlog.app.ui.group.CreateGroupScreen
+import com.dailyvlog.app.ui.group.GroupDetailScreen
+import com.dailyvlog.app.ui.group.GroupEffect
+import com.dailyvlog.app.ui.group.GroupViewModel
+import com.dailyvlog.app.ui.group.JoinGroupScreen
 import com.dailyvlog.app.ui.home.HomeScreen
+import com.dailyvlog.app.ui.navigation.CreateGroupRoute
+import com.dailyvlog.app.ui.navigation.GroupDetailRoute
 import com.dailyvlog.app.ui.navigation.HomeRoute
+import com.dailyvlog.app.ui.navigation.JoinGroupRoute
 import com.dailyvlog.app.ui.navigation.LoginRoute
 import com.dailyvlog.app.ui.navigation.ProfileRoute
 import com.dailyvlog.app.ui.navigation.RegisterRoute
@@ -59,25 +70,55 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private var pendingInviteCode by mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        handleDeepLink(intent)
+
         setContent {
             DailyVlogCrewTheme {
-                AppRoot()
+                AppRoot(
+                    pendingInviteCode = pendingInviteCode,
+                    onClearPendingInviteCode = { pendingInviteCode = null }
+                )
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleDeepLink(intent)
+    }
+
+    private fun handleDeepLink(intent: Intent?) {
+        val uri = intent?.data ?: return
+        if (uri.scheme == "dailyvlog" && uri.host == "join") {
+            val code = uri.lastPathSegment?.trim()
+            if (!code.isNullOrEmpty()) {
+                pendingInviteCode = code
             }
         }
     }
 }
 
 @Composable
-fun AppRoot(viewModel: AuthViewModel = hiltViewModel()) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+fun AppRoot(
+    pendingInviteCode: String? = null,
+    onClearPendingInviteCode: () -> Unit = {},
+    authViewModel: AuthViewModel = hiltViewModel(),
+    groupViewModel: GroupViewModel = hiltViewModel()
+) {
+    val authState by authViewModel.state.collectAsStateWithLifecycle()
+    val groupState by groupViewModel.uiState.collectAsStateWithLifecycle()
     val navController = rememberNavController()
     val context = LocalContext.current
 
+    // Auth effects
     LaunchedEffect(Unit) {
-        viewModel.effects.collect { effect ->
+        authViewModel.effects.collect { effect ->
             when (effect) {
                 is AuthEffect.NavigateToHome -> {
                     navController.navigate(HomeRoute) {
@@ -96,7 +137,36 @@ fun AppRoot(viewModel: AuthViewModel = hiltViewModel()) {
         }
     }
 
-    if (state is AuthUiState.Unauthenticated && (state as AuthUiState.Unauthenticated).isLoading) {
+    // Group effects
+    LaunchedEffect(Unit) {
+        groupViewModel.effects.collect { effect ->
+            when (effect) {
+                is GroupEffect.NavigateToGroup -> {
+                    navController.navigate(GroupDetailRoute(effect.groupId)) {
+                        popUpTo(CreateGroupRoute) { inclusive = true }
+                        popUpTo(JoinGroupRoute()) { inclusive = true }
+                    }
+                }
+                is GroupEffect.GroupDeletedOrLeft -> {
+                    navController.popBackStack(HomeRoute, inclusive = false)
+                }
+                is GroupEffect.ShowToast -> {
+                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    // Handle deep link when user is authenticated
+    LaunchedEffect(pendingInviteCode, authState) {
+        val code = pendingInviteCode
+        if (code != null && authState is AuthUiState.Authenticated) {
+            onClearPendingInviteCode()
+            navController.navigate(JoinGroupRoute(prefilledCode = code))
+        }
+    }
+
+    if (authState is AuthUiState.Unauthenticated && (authState as AuthUiState.Unauthenticated).isLoading) {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
@@ -112,7 +182,7 @@ fun AppRoot(viewModel: AuthViewModel = hiltViewModel()) {
         return
     }
 
-    val startDestination = if (state is AuthUiState.Authenticated) HomeRoute else WelcomeRoute
+    val startDestination = if (authState is AuthUiState.Authenticated) HomeRoute else WelcomeRoute
 
     NavHost(
         navController = navController,
@@ -121,11 +191,11 @@ fun AppRoot(viewModel: AuthViewModel = hiltViewModel()) {
         composable<WelcomeRoute> {
             WelcomeScreen(
                 onNavigateToLogin = {
-                    viewModel.clearError()
+                    authViewModel.clearError()
                     navController.navigate(LoginRoute)
                 },
                 onNavigateToRegister = {
-                    viewModel.clearError()
+                    authViewModel.clearError()
                     navController.navigate(RegisterRoute)
                 }
             )
@@ -133,10 +203,10 @@ fun AppRoot(viewModel: AuthViewModel = hiltViewModel()) {
 
         composable<LoginRoute> {
             LoginScreen(
-                state = state,
-                onLogin = { email, pass -> viewModel.login(email, pass) },
+                state = authState,
+                onLogin = { email, pass -> authViewModel.login(email, pass) },
                 onNavigateToRegister = {
-                    viewModel.clearError()
+                    authViewModel.clearError()
                     navController.navigate(RegisterRoute)
                 },
                 onBack = { navController.popBackStack() }
@@ -145,12 +215,12 @@ fun AppRoot(viewModel: AuthViewModel = hiltViewModel()) {
 
         composable<RegisterRoute> {
             RegisterScreen(
-                state = state,
+                state = authState,
                 onRegister = { email, pass, confirm, pseudo ->
-                    viewModel.register(email, pass, confirm, pseudo)
+                    authViewModel.register(email, pass, confirm, pseudo)
                 },
                 onNavigateToLogin = {
-                    viewModel.clearError()
+                    authViewModel.clearError()
                     navController.navigate(LoginRoute)
                 },
                 onBack = { navController.popBackStack() }
@@ -159,17 +229,76 @@ fun AppRoot(viewModel: AuthViewModel = hiltViewModel()) {
 
         composable<HomeRoute> {
             HomeScreen(
-                user = state.user,
+                user = authState.user,
+                groups = groupState.groups,
                 onNavigateToProfile = { navController.navigate(ProfileRoute) },
-                onLogout = { viewModel.logout() }
+                onLogout = { authViewModel.logout() },
+                onCreateGroup = {
+                    groupViewModel.clearError()
+                    navController.navigate(CreateGroupRoute)
+                },
+                onJoinGroup = {
+                    groupViewModel.clearError()
+                    navController.navigate(JoinGroupRoute())
+                },
+                onSelectGroup = { groupId ->
+                    navController.navigate(GroupDetailRoute(groupId))
+                }
             )
         }
 
         composable<ProfileRoute> {
             ProfileScreen(
-                user = state.user,
-                onUpdatePseudo = { viewModel.updatePseudo(it) },
-                onLogout = { viewModel.logout() },
+                user = authState.user,
+                onUpdatePseudo = { authViewModel.updatePseudo(it) },
+                onLogout = { authViewModel.logout() },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<CreateGroupRoute> {
+            CreateGroupScreen(
+                state = groupState,
+                onCreateGroup = { name, emoji, colorHex, switchTime, maxDuration ->
+                    groupViewModel.createGroup(name, emoji, colorHex, switchTime, maxDuration)
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<JoinGroupRoute> { backStackEntry ->
+            val route = backStackEntry.toRoute<JoinGroupRoute>()
+            JoinGroupScreen(
+                state = groupState,
+                prefilledCode = route.prefilledCode,
+                onJoinGroup = { code ->
+                    groupViewModel.joinGroup(code)
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<GroupDetailRoute> { backStackEntry ->
+            val route = backStackEntry.toRoute<GroupDetailRoute>()
+            GroupDetailScreen(
+                groupId = route.groupId,
+                state = groupState,
+                currentUserId = authState.user?.id,
+                onSelectGroup = { groupId ->
+                    groupViewModel.selectGroup(groupId)
+                },
+                onRegenerateCode = { groupId ->
+                    groupViewModel.regenerateCode(groupId)
+                },
+                onRemoveMember = { groupId, memberUserId ->
+                    groupViewModel.removeMember(groupId, memberUserId)
+                },
+                onLeaveGroup = { groupId ->
+                    groupViewModel.leaveGroup(groupId)
+                },
+                onDeleteGroup = { groupId ->
+                    groupViewModel.deleteGroup(groupId)
+                },
                 onBack = { navController.popBackStack() }
             )
         }

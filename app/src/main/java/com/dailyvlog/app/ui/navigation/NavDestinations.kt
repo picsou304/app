@@ -16,3 +16,12 @@ data object HomeRoute
 
 @Serializable
 data object ProfileRoute
+
+@Serializable
+data object CreateGroupRoute
+
+@Serializable
+data class JoinGroupRoute(val prefilledCode: String? = null)
+
+@Serializable
+data class GroupDetailRoute(val groupId: String)
