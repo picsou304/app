@@ -2,8 +2,10 @@ package com.dailyvlog.app.ui.record
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.provider.Settings
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -226,11 +228,31 @@ fun PermissionRequestView(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            val context = LocalContext.current
+            OutlinedButton(
+                onClick = {
+                    val intent = Intent(
+                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.fromParts("package", context.packageName, null)
+                    )
+                    context.startActivity(intent)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .testTag("btn_open_app_settings")
+            ) {
+                Text("⚙️ Ouvrir les réglages de l'application")
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             OutlinedButton(
                 onClick = onBack,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
+                    .testTag("btn_permission_back")
             ) {
                 Text("Retour")
             }

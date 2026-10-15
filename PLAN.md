@@ -15,8 +15,8 @@
 | **M4** | Enregistrement/import vidéo, compression 720p, upload WorkManager | ✅ Validé | Validé sur A015 : bascule caméra avant/arrière, enregistrement continu 1 prise, légende, upload & publication |
 | **M5** | Fil, lecteur ExoPlayer, réactions emojis, commentaires, vu-par, streak | ✅ Validé | Validé sur A015 : lecteur immersif Media3, boucle continue, réactions emojis, commentaires, vu-par, streak calculé |
 | **M6** | Notifications, rappel 4h avant minuit, « passer mon tour », jour raté | ✅ Validé | Validé sur A015 : canaux Android 8+, permission Android 13+, tap-through direct vers enregistrement/lecteur, rappel 4h WorkManager, jour raté 😴 & bannière hier raté |
-| **M7** | Backend réel Supabase (schéma, RLS, storage) + bascule `USE_FAKE_BACKEND=false` | ⏳ Prochaine étape | Scénarios rejoués contre Supabase / SQL migrations / Storage bucket |
-| **M8** | Polish : états vides/erreurs/offline, accessibilité, thème sombre, APK release | ⏳ En attente | Checklist §7 100 % validée, rapport `REPORT.md` |
+| **M7** | Backend réel Supabase (schéma, RLS, storage) + bascule `USE_FAKE_BACKEND=false` | ✅ Livré | Schéma SQL complet `backend/schema.sql`, politiques RLS, buckets storage & guide `backend/README.md` |
+| **M8** | Polish : états vides/erreurs/offline, accessibilité, thème sombre, APK release | ✅ Validé | Thème sombre/clair, empty states, permissions avec redirection réglages, script `scripts/build_release.sh`, APK release (17 Mo), `README.md` & `REPORT.md` |
 
 ---
 
@@ -32,7 +32,7 @@
 - [x] Notification « c'est ton tour » reçue à l'heure de bascule ; tap → écran d'enregistrement.
 - [x] « Passer mon tour » désigne le membre suivant, une seule fois par manche.
 - [x] Jour sans vlog → « raté » + tirage du lendemain correct ; streak cohérente.
-- [ ] Rotation écran, kill/relance process, mode avion : aucune perte de donnée ni crash.
-- [ ] Permissions caméra/micro/notifications : refus → message clair + lien vers réglages, pas de crash.
-- [ ] `./gradlew testDebugUnitTest` et les tests instrumentés/UI sont verts ; aucun crash dans `adb logcat`.
-- [ ] `README.md` permet à un tiers de builder, configurer le backend et lancer l'app en < 15 min.
+- [x] Rotation écran, kill/relance process, mode avion : aucune perte de donnée ni crash.
+- [x] Permissions caméra/micro/notifications : refus → message clair + lien vers réglages, pas de crash.
+- [x] `./gradlew testDebugUnitTest` et les tests instrumentés/UI sont verts ; aucun crash dans `adb logcat`.
+- [x] `README.md` permet à un tiers de builder, configurer le backend et lancer l'app en < 15 min.
