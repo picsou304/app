@@ -147,4 +147,34 @@ class RecordVlogViewModelTest {
             assertEquals("", state.caption)
         }
     }
+
+    @Test
+    fun `publishVlog success emits VlogPublished effect and updates state`() = runTest {
+        val viewModel = RecordVlogViewModel(mockApplication, authRepository, vlogRepository)
+        val mockUri = mockk<Uri>(relaxed = true)
+        viewModel.onVideoReady(mockUri, 15)
+        viewModel.onCaptionChanged("Test caption")
+
+        vlogRepository.publishResult = Result.success(
+            VlogPost(
+                id = "vlog-test",
+                groupId = "group-1",
+                authorUserId = "user-1",
+                authorPseudo = "Alice",
+                date = "2026-10-15",
+                videoUri = "uri",
+                durationSeconds = 15,
+                caption = "Test caption"
+            )
+        )
+
+        viewModel.effects.test {
+            viewModel.publishVlog("group-1")
+            val toast = awaitItem()
+            assertTrue(toast is RecordVlogEffect.ShowToast)
+            val published = awaitItem()
+            assertEquals(RecordVlogEffect.VlogPublished, published)
+        }
+    }
 }
+

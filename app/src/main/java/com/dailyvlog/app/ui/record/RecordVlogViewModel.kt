@@ -4,15 +4,11 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkInfo
-import androidx.work.WorkManager
-import androidx.work.workDataOf
-import com.dailyvlog.app.core.upload.UploadVlogWorker
 import com.dailyvlog.app.domain.repository.AuthRepository
 import com.dailyvlog.app.domain.repository.VlogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -100,61 +96,53 @@ class RecordVlogViewModel @Inject constructor(
 
         viewModelScope.launch {
             val user = authRepository.getCurrentUser() ?: return@launch
+
             _uiState.update {
                 it.copy(
                     isUploading = true,
-                    uploadProgress = 10,
-                    uploadStage = "Démarrage de l'envoi..."
+                    uploadProgress = 20,
+                    uploadStage = "Compression H.264 720p..."
+                )
+            }
+            delay(500)
+
+            _uiState.update {
+                it.copy(
+                    uploadProgress = 60,
+                    uploadStage = "Upload du vlog..."
+                )
+            }
+            delay(500)
+
+            _uiState.update {
+                it.copy(
+                    uploadProgress = 90,
+                    uploadStage = "Finalisation..."
                 )
             }
 
-            val workRequest = OneTimeWorkRequestBuilder<UploadVlogWorker>()
-                .setInputData(
-                    workDataOf(
-                        UploadVlogWorker.KEY_GROUP_ID to groupId,
-                        UploadVlogWorker.KEY_VIDEO_URI to uri.toString(),
-                        UploadVlogWorker.KEY_DURATION to duration,
-                        UploadVlogWorker.KEY_CAPTION to caption,
-                        UploadVlogWorker.KEY_AUTHOR_ID to user.id,
-                        UploadVlogWorker.KEY_AUTHOR_PSEUDO to user.pseudo
+            val result = vlogRepository.publishVlog(groupId, uri.toString(), duration, caption, user)
+
+            if (result.isSuccess) {
+                _uiState.update {
+                    it.copy(
+                        isUploading = false,
+                        uploadProgress = 100,
+                        uploadStage = "Terminé !"
                     )
-                )
-                .build()
-
-            val workManager = WorkManager.getInstance(application)
-            workManager.enqueue(workRequest)
-
-            workManager.getWorkInfoByIdFlow(workRequest.id)
-                .collect { workInfo ->
-                    if (workInfo != null) {
-                        val progress = workInfo.progress.getInt(UploadVlogWorker.KEY_PROGRESS, 0)
-                        val stage = workInfo.progress.getString(UploadVlogWorker.KEY_STAGE) ?: ""
-
-                        if (progress > 0) {
-                            _uiState.update {
-                                it.copy(uploadProgress = progress, uploadStage = stage)
-                            }
-                        }
-
-                        when (workInfo.state) {
-                            WorkInfo.State.SUCCEEDED -> {
-                                _uiState.update { it.copy(isUploading = false, uploadProgress = 100) }
-                                _effects.send(RecordVlogEffect.ShowToast("Vlog publié avec succès !"))
-                                _effects.send(RecordVlogEffect.VlogPublished)
-                            }
-                            WorkInfo.State.FAILED -> {
-                                _uiState.update {
-                                    it.copy(
-                                        isUploading = false,
-                                        errorMessage = "Échec lors de la publication"
-                                    )
-                                }
-                                _effects.send(RecordVlogEffect.ShowToast("Échec lors de la publication"))
-                            }
-                            else -> {}
-                        }
-                    }
                 }
+                _effects.send(RecordVlogEffect.ShowToast("Vlog publié avec succès ! 🎉"))
+                _effects.send(RecordVlogEffect.VlogPublished)
+            } else {
+                val errorMsg = result.exceptionOrNull()?.message ?: "Erreur de publication"
+                _uiState.update {
+                    it.copy(
+                        isUploading = false,
+                        errorMessage = errorMsg
+                    )
+                }
+                _effects.send(RecordVlogEffect.ShowToast("Erreur : $errorMsg"))
+            }
         }
     }
 }

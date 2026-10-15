@@ -283,6 +283,47 @@ fun CameraRecordView(
         }
     }
 
+    val previewView = remember {
+        PreviewView(context).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        }
+    }
+
+    LaunchedEffect(lensFacing, lifecycleOwner) {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+        cameraProviderFuture.addListener({
+            val cameraProvider = cameraProviderFuture.get()
+            val preview = Preview.Builder().build().also {
+                it.surfaceProvider = previewView.surfaceProvider
+            }
+
+            val recorder = Recorder.Builder()
+                .setQualitySelector(QualitySelector.from(Quality.HD))
+                .build()
+            val videoCapture = androidx.camera.video.VideoCapture.withOutput(recorder)
+            videoCaptureUseCase = videoCapture
+
+            val cameraSelector = CameraSelector.Builder()
+                .requireLensFacing(lensFacing)
+                .build()
+
+            try {
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(
+                    lifecycleOwner,
+                    cameraSelector,
+                    preview,
+                    videoCapture
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }, ContextCompat.getMainExecutor(context))
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -291,77 +332,7 @@ fun CameraRecordView(
     ) {
         // CameraX Preview
         AndroidView(
-            factory = { ctx ->
-                val previewView = PreviewView(ctx).apply {
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-                }
-
-                val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
-                cameraProviderFuture.addListener({
-                    val cameraProvider = cameraProviderFuture.get()
-                    val preview = Preview.Builder().build().also {
-                        it.surfaceProvider = previewView.surfaceProvider
-                    }
-
-                    val recorder = Recorder.Builder()
-                        .setQualitySelector(QualitySelector.from(Quality.HD))
-                        .build()
-                    val videoCapture = androidx.camera.video.VideoCapture.withOutput(recorder)
-                    videoCaptureUseCase = videoCapture
-
-                    val cameraSelector = CameraSelector.Builder()
-                        .requireLensFacing(lensFacing)
-                        .build()
-
-                    try {
-                        cameraProvider.unbindAll()
-                        cameraProvider.bindToLifecycle(
-                            lifecycleOwner,
-                            cameraSelector,
-                            preview,
-                            videoCapture
-                        )
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }, ContextCompat.getMainExecutor(ctx))
-
-                previewView
-            },
-            update = { previewView ->
-                val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-                cameraProviderFuture.addListener({
-                    val cameraProvider = cameraProviderFuture.get()
-                    val preview = Preview.Builder().build().also {
-                        it.surfaceProvider = previewView.surfaceProvider
-                    }
-
-                    val recorder = Recorder.Builder()
-                        .setQualitySelector(QualitySelector.from(Quality.HD))
-                        .build()
-                    val videoCapture = androidx.camera.video.VideoCapture.withOutput(recorder)
-                    videoCaptureUseCase = videoCapture
-
-                    val cameraSelector = CameraSelector.Builder()
-                        .requireLensFacing(lensFacing)
-                        .build()
-
-                    try {
-                        cameraProvider.unbindAll()
-                        cameraProvider.bindToLifecycle(
-                            lifecycleOwner,
-                            cameraSelector,
-                            preview,
-                            videoCapture
-                        )
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }, ContextCompat.getMainExecutor(context))
-            },
+            factory = { previewView },
             modifier = Modifier.fillMaxSize()
         )
 
@@ -479,19 +450,23 @@ fun CameraRecordView(
 
                                 onRecordingStarted()
 
-                                val recording = videoCapture.output
-                                    .prepareRecording(context, outputOptions)
-                                    .withAudioEnabled()
-                                    .start(ContextCompat.getMainExecutor(context)) { event ->
-                                        if (event is VideoRecordEvent.Finalize) {
-                                            if (!event.hasError()) {
-                                                val uri = Uri.fromFile(outputFile)
-                                                onVideoReady(uri, elapsedSeconds.coerceAtLeast(1))
-                                            } else {
-                                                Toast.makeText(context, "Erreur enregistrement", Toast.LENGTH_SHORT).show()
-                                            }
+                                val hasAudio = ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.RECORD_AUDIO
+                                ) == PackageManager.PERMISSION_GRANTED
+                                val pending = videoCapture.output.prepareRecording(context, outputOptions)
+                                val prepared = if (hasAudio) pending.withAudioEnabled() else pending
+
+                                val recording = prepared.start(ContextCompat.getMainExecutor(context)) { event ->
+                                    if (event is VideoRecordEvent.Finalize) {
+                                        if (!event.hasError()) {
+                                            val uri = Uri.fromFile(outputFile)
+                                            onVideoReady(uri, elapsedSeconds.coerceAtLeast(1))
+                                        } else {
+                                            Toast.makeText(context, "Erreur enregistrement : ${event.error}", Toast.LENGTH_SHORT).show()
                                         }
                                     }
+                                }
                                 activeRecording = recording
                             }
                         } else {
