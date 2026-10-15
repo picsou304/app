@@ -12,7 +12,7 @@
 | **M1** | Design system M3, navigation, auth (Fake + interface Remote) | ✅ Validé | Tests 1 (connexion Alice), 2 (profil & déconnexion) et 3 (inscription) validés sur device physique A015 |
 | **M2** | Groupes : création, code d'invitation, deep link, rôles | ✅ Validé | Tests 4, 5, 6 validés sur device physique A015 (création groupe, code 6 car., copie, invitation, adhésion) |
 | **M3** | `DailyPickerEngine` + tests unitaires + écran « Aujourd'hui » + DebugClock | ✅ Validé | Tests 7, 8, 9 validés sur device A015 (DailyPicker déterministe, pass tour, DebugClock, countdown) |
-| **M4** | Enregistrement/import vidéo, compression 720p, upload WorkManager | 🔄 En cours | CameraX VideoCapture 1 prise, aperçu ExoPlayer, légende, WorkManager upload |
+| **M4** | Enregistrement/import vidéo, compression 720p, upload WorkManager | 🔄 À tester sur device | CameraX VideoCapture 1 prise, aperçu ExoPlayer, légende, WorkManager upload 720p |
 | **M5** | Fil, lecteur ExoPlayer, réactions emojis, commentaires, vu-par, streak | ⏳ En attente | Bob réagit & commente ; synchronisation temps réel vérifiée |
 | **M6** | Notifications, rappel 4h avant minuit, « passer mon tour », jour raté | ⏳ En attente | Pro : notification reçue, tap-through direct vers enregistrement |
 | **M7** | Backend réel Supabase (schéma, RLS, storage) + bascule `USE_FAKE_BACKEND=false` | ⏳ En attente | Scénarios rejoués contre Supabase |
