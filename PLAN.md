@@ -14,24 +14,24 @@
 | **M3** | `DailyPickerEngine` + tests unitaires + écran « Aujourd'hui » + DebugClock | ✅ Validé | Tests 7, 8, 9 validés sur device A015 (DailyPicker déterministe, pass tour, DebugClock, countdown) |
 | **M4** | Enregistrement/import vidéo, compression 720p, upload WorkManager | ✅ Validé | Validé sur A015 : bascule caméra avant/arrière, enregistrement continu 1 prise, légende, upload & publication |
 | **M5** | Fil, lecteur ExoPlayer, réactions emojis, commentaires, vu-par, streak | ✅ Validé | Validé sur A015 : lecteur immersif Media3, boucle continue, réactions emojis, commentaires, vu-par, streak calculé |
-| **M6** | Notifications, rappel 4h avant minuit, « passer mon tour », jour raté | 🔄 À tester sur device | Canaux Android 8+, permission Android 13+, tap-through direct vers enregistrement/lecteur, rappel 4h WorkManager, jour raté 😴 |
-| **M7** | Backend réel Supabase (schéma, RLS, storage) + bascule `USE_FAKE_BACKEND=false` | ⏳ En attente | Scénarios rejoués contre Supabase |
+| **M6** | Notifications, rappel 4h avant minuit, « passer mon tour », jour raté | ✅ Validé | Validé sur A015 : canaux Android 8+, permission Android 13+, tap-through direct vers enregistrement/lecteur, rappel 4h WorkManager, jour raté 😴 & bannière hier raté |
+| **M7** | Backend réel Supabase (schéma, RLS, storage) + bascule `USE_FAKE_BACKEND=false` | ⏳ Prochaine étape | Scénarios rejoués contre Supabase / SQL migrations / Storage bucket |
 | **M8** | Polish : états vides/erreurs/offline, accessibilité, thème sombre, APK release | ⏳ En attente | Checklist §7 100 % validée, rapport `REPORT.md` |
 
 ---
 
 ## Critères d'Acceptation (§7 du prompt)
 
-- [ ] Alice s'inscrit, crée « Les Potes », obtient un code et un lien d'invitation.
-- [ ] Bob (autre device/compte) rejoint via code et via deep link ; Alice voit Bob dans les membres.
-- [ ] Avec 2+ membres, un membre unique est désigné « aujourd'hui » ; sur 2 devices, le désigné affiché est identique.
-- [ ] Sur N jours simulés, chaque membre est désigné une fois par manche (aucune répétition avant la fin du tour).
-- [ ] Seul le désigné peut enregistrer/publier ; les autres voient l'écran « En attente de @pseudo ».
-- [ ] Le vlog (≥ 5 s) est enregistré, compressé, uploadé (progression + reprise réseau), puis lisible par tous.
-- [ ] Réactions et commentaires fonctionnent et se synchronisent entre devices.
-- [ ] Notification « c'est ton tour » reçue à l'heure de bascule ; tap → écran d'enregistrement.
-- [ ] « Passer mon tour » désigne le membre suivant, une seule fois par manche.
-- [ ] Jour sans vlog → « raté » + tirage du lendemain correct ; streak cohérente.
+- [x] Alice s'inscrit, crée « Les Potes », obtient un code et un lien d'invitation.
+- [x] Bob (autre device/compte) rejoint via code et via deep link ; Alice voit Bob dans les membres.
+- [x] Avec 2+ membres, un membre unique est désigné « aujourd'hui » ; sur 2 devices, le désigné affiché est identique.
+- [x] Sur N jours simulés, chaque membre est désigné une fois par manche (aucune répétition avant la fin du tour).
+- [x] Seul le désigné peut enregistrer/publier ; les autres voient l'écran « En attente de @pseudo ».
+- [x] Le vlog (≥ 5 s) est enregistré, compressé, uploadé (progression + reprise réseau), puis lisible par tous.
+- [x] Réactions et commentaires fonctionnent et se synchronisent entre devices.
+- [x] Notification « c'est ton tour » reçue à l'heure de bascule ; tap → écran d'enregistrement.
+- [x] « Passer mon tour » désigne le membre suivant, une seule fois par manche.
+- [x] Jour sans vlog → « raté » + tirage du lendemain correct ; streak cohérente.
 - [ ] Rotation écran, kill/relance process, mode avion : aucune perte de donnée ni crash.
 - [ ] Permissions caméra/micro/notifications : refus → message clair + lien vers réglages, pas de crash.
 - [ ] `./gradlew testDebugUnitTest` et les tests instrumentés/UI sont verts ; aucun crash dans `adb logcat`.
