@@ -1,0 +1,6 @@
+## Location of the Android SDK. This is only used by Gradle.
+sdk.dir=/path/to/Android/Sdk
+
+## Supabase credentials (optional for FakeBackend, required for RemoteBackend)
+supabase.url=https://your-project-id.supabase.co
+supabase.anon.key=your-anon-key-here

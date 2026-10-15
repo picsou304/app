@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Daily Vlog Crew</string>
+    <string name="welcome_title">Bienvenue sur Daily Vlog Crew</string>
+    <string name="welcome_subtitle">Chaque jour, un membre poste son vlog !</string>
+    <string name="login">Connexion</string>
+    <string name="register">Inscription</string>
+    <string name="email">Adresse email</string>
+    <string name="password">Mot de passe</string>
+    <string name="pseudo">Pseudo</string>
+    <string name="create_group">Créer un groupe</string>
+    <string name="join_group">Rejoindre un groupe</string>
+</resources>
