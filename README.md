@@ -113,3 +113,4 @@ L'application supporte nativement **Supabase** en production :
 
 ## 📄 Licence
 Projet réalisé dans le cadre du défi **Daily Vlog Crew**.
+# app
