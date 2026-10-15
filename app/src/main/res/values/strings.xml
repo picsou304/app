@@ -89,4 +89,17 @@
     <string name="compression_notice">Optimisation H.264 720p avant envoi</string>
     <string name="publishing_vlog">Publication de votre vlog...</string>
     <string name="vlog_published_success">Vlog publié avec succès !</string>
+
+    <!-- M5 Player, Reactions, Comments, Views, Streak strings -->
+    <string name="watch_vlog_title">Vlog du jour</string>
+    <string name="reactions_title">Réactions</string>
+    <string name="comments_title">Commentaires (%1$d)</string>
+    <string name="no_comments_yet">Aucun commentaire pour le moment. Soyez le premier !</string>
+    <string name="comment_input_placeholder">Ajouter un commentaire...</string>
+    <string name="btn_send_comment">Envoyer</string>
+    <string name="seen_by_title">Membres ayant vu ce vlog (%1$d)</string>
+    <string name="no_views_yet">Aucune vue enregistrée</string>
+    <string name="streak_label">🔥 %1$d jours d\'affilée</string>
+    <string name="streak_single">🔥 1 jour</string>
+    <string name="no_vlog_available">Aucun vlog disponible pour aujourd\'hui</string>
 </resources>

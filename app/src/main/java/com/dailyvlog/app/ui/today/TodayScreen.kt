@@ -71,6 +71,7 @@ fun TodayScreen(
     state: TodayUiState,
     onLoadGroup: (groupId: String) -> Unit,
     onRecordClicked: () -> Unit,
+    onWatchVlog: (vlogId: String?) -> Unit = {},
     onSkipTurn: () -> Unit,
     onAdvanceDay: () -> Unit,
     onAdvanceHour: () -> Unit,
@@ -240,10 +241,11 @@ fun TodayScreen(
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                         Button(
-                            onClick = onRecordClicked,
+                            onClick = { onWatchVlog(assignment.vlogId) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(52.dp)
+                                .testTag("btn_watch_vlog")
                         ) {
                             Icon(Icons.Default.PlayArrow, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))

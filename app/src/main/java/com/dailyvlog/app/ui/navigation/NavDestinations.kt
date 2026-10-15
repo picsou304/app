@@ -32,3 +32,5 @@ data class TodayRoute(val groupId: String)
 @Serializable
 data class RecordVlogRoute(val groupId: String, val maxDurationSeconds: Int = 60)
 
+@Serializable
+data class WatchVlogRoute(val groupId: String, val vlogId: String? = null)

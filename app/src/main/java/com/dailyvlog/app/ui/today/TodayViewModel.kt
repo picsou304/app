@@ -40,6 +40,7 @@ data class TodayUiState(
 
 sealed interface TodayEffect {
     data class NavigateToRecord(val groupId: String, val maxDuration: Int) : TodayEffect
+    data class NavigateToWatchVlog(val groupId: String, val vlogId: String? = null) : TodayEffect
     data class ShowToast(val message: String) : TodayEffect
 }
 
@@ -132,6 +133,14 @@ class TodayViewModel @Inject constructor(
             viewModelScope.launch {
                 _effects.send(TodayEffect.ShowToast("Seul le membre désigné peut enregistrer le vlog aujourd'hui"))
             }
+        }
+    }
+
+    fun onWatchVlogClicked() {
+        val state = _uiState.value
+        val group = state.groupWithMembers?.group ?: return
+        viewModelScope.launch {
+            _effects.send(TodayEffect.NavigateToWatchVlog(group.id, state.assignment?.vlogId))
         }
     }
 

@@ -24,11 +24,16 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+import com.dailyvlog.app.domain.model.VlogComment
+import com.dailyvlog.app.domain.model.VlogReaction
+import com.dailyvlog.app.domain.model.VlogView
+
 class FakeTestVlogRepo : VlogRepository {
     val vlogsFlow = MutableStateFlow<List<VlogPost>>(emptyList())
     var publishResult: Result<VlogPost>? = null
 
     override fun getTodayVlog(groupId: String, date: String): Flow<VlogPost?> = MutableStateFlow(null)
+    override fun getVlogById(vlogId: String): Flow<VlogPost?> = MutableStateFlow(null)
     override fun getGroupVlogs(groupId: String): Flow<List<VlogPost>> = vlogsFlow
 
     override suspend fun publishVlog(
@@ -42,6 +47,14 @@ class FakeTestVlogRepo : VlogRepository {
     }
 
     override suspend fun deleteVlog(vlogId: String, requesterUserId: String): Result<Unit> = Result.success(Unit)
+
+    override fun getVlogReactions(vlogId: String): Flow<List<VlogReaction>> = MutableStateFlow(emptyList())
+    override suspend fun toggleReaction(vlogId: String, emoji: String, user: User): Result<Unit> = Result.success(Unit)
+    override fun getVlogComments(vlogId: String): Flow<List<VlogComment>> = MutableStateFlow(emptyList())
+    override suspend fun addComment(vlogId: String, text: String, author: User): Result<VlogComment> = Result.failure(Exception())
+    override fun getVlogViews(vlogId: String): Flow<List<VlogView>> = MutableStateFlow(emptyList())
+    override suspend fun recordView(vlogId: String, user: User): Result<Unit> = Result.success(Unit)
+    override fun getGroupStreak(groupId: String): Flow<Int> = MutableStateFlow(0)
 }
 
 class FakeTestAuthRepoForRecord : AuthRepository {

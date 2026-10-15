@@ -203,4 +203,32 @@ class TodayViewModelTest {
             assertTrue((effect as TodayEffect.ShowToast).message.contains("Bob"))
         }
     }
+
+    @Test
+    fun `onWatchVlogClicked emits NavigateToWatchVlog effect`() = runTest {
+        val testAssignment = DailyAssignment(
+            id = "group-1-2026-10-15",
+            groupId = "group-1",
+            date = "2026-10-15",
+            roundNumber = 1,
+            assignedUserId = "user-1",
+            assignedUserPseudo = "Alice",
+            deadlineTimestamp = System.currentTimeMillis() + 3600_000,
+            status = AssignmentStatus.POSTED,
+            vlogId = "vlog-abc-123"
+        )
+        assignmentRepository.assignmentFlow.value = testAssignment
+
+        val viewModel = TodayViewModel(groupRepository, assignmentRepository, authRepository, debugClock)
+        viewModel.loadGroup("group-1")
+
+        viewModel.effects.test {
+            viewModel.onWatchVlogClicked()
+            val effect = awaitItem()
+            assertTrue(effect is TodayEffect.NavigateToWatchVlog)
+            val watchEffect = effect as TodayEffect.NavigateToWatchVlog
+            assertEquals("group-1", watchEffect.groupId)
+            assertEquals("vlog-abc-123", watchEffect.vlogId)
+        }
+    }
 }

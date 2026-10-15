@@ -111,7 +111,8 @@ fun AppRoot(
     authViewModel: AuthViewModel = hiltViewModel(),
     groupViewModel: GroupViewModel = hiltViewModel(),
     todayViewModel: com.dailyvlog.app.ui.today.TodayViewModel = hiltViewModel(),
-    recordVlogViewModel: com.dailyvlog.app.ui.record.RecordVlogViewModel = hiltViewModel()
+    recordVlogViewModel: com.dailyvlog.app.ui.record.RecordVlogViewModel = hiltViewModel(),
+    watchVlogViewModel: com.dailyvlog.app.ui.watch.WatchVlogViewModel = hiltViewModel()
 ) {
     val authState by authViewModel.state.collectAsStateWithLifecycle()
     val groupState by groupViewModel.uiState.collectAsStateWithLifecycle()
@@ -173,8 +174,30 @@ fun AppRoot(
                         )
                     )
                 }
+                is com.dailyvlog.app.ui.today.TodayEffect.NavigateToWatchVlog -> {
+                    navController.navigate(
+                        com.dailyvlog.app.ui.navigation.WatchVlogRoute(
+                            groupId = effect.groupId,
+                            vlogId = effect.vlogId
+                        )
+                    )
+                }
                 is com.dailyvlog.app.ui.today.TodayEffect.ShowToast -> {
                     Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    // Watch Vlog effects
+    LaunchedEffect(Unit) {
+        watchVlogViewModel.effects.collect { effect ->
+            when (effect) {
+                is com.dailyvlog.app.ui.watch.WatchVlogEffect.ShowToast -> {
+                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                }
+                is com.dailyvlog.app.ui.watch.WatchVlogEffect.NavigateBack -> {
+                    navController.popBackStack()
                 }
             }
         }
@@ -350,6 +373,14 @@ fun AppRoot(
                 state = todayState,
                 onLoadGroup = { todayViewModel.loadGroup(it) },
                 onRecordClicked = { todayViewModel.onRecordClicked() },
+                onWatchVlog = { vlogId ->
+                    navController.navigate(
+                        com.dailyvlog.app.ui.navigation.WatchVlogRoute(
+                            groupId = route.groupId,
+                            vlogId = vlogId
+                        )
+                    )
+                },
                 onSkipTurn = { todayViewModel.skipTurn() },
                 onAdvanceDay = { todayViewModel.advanceDay() },
                 onAdvanceHour = { todayViewModel.advanceHour() },
@@ -371,6 +402,27 @@ fun AppRoot(
                 onCaptionChanged = { recordVlogViewModel.onCaptionChanged(it) },
                 onRetake = { recordVlogViewModel.onRetake() },
                 onPublish = { recordVlogViewModel.publishVlog(it) },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<com.dailyvlog.app.ui.navigation.WatchVlogRoute> { backStackEntry ->
+            val route = backStackEntry.toRoute<com.dailyvlog.app.ui.navigation.WatchVlogRoute>()
+            val watchState by watchVlogViewModel.uiState.collectAsStateWithLifecycle()
+            com.dailyvlog.app.ui.watch.WatchVlogScreen(
+                groupId = route.groupId,
+                vlogId = route.vlogId,
+                state = watchState,
+                onLoadVlog = { gid, vid -> watchVlogViewModel.loadVlog(gid, vid) },
+                onTogglePlayPause = { watchVlogViewModel.togglePlayPause() },
+                onToggleMute = { watchVlogViewModel.toggleMute() },
+                onToggleReaction = { watchVlogViewModel.toggleReaction(it) },
+                onCommentInputChanged = { watchVlogViewModel.onCommentInputChanged(it) },
+                onSubmitComment = { watchVlogViewModel.submitComment() },
+                onOpenComments = { watchVlogViewModel.setShowCommentsSheet(true) },
+                onDismissComments = { watchVlogViewModel.setShowCommentsSheet(false) },
+                onOpenViewers = { watchVlogViewModel.setShowViewersSheet(true) },
+                onDismissViewers = { watchVlogViewModel.setShowViewersSheet(false) },
                 onBack = { navController.popBackStack() }
             )
         }
