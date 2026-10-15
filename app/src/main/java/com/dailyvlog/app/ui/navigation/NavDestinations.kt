@@ -25,3 +25,6 @@ data class JoinGroupRoute(val prefilledCode: String? = null)
 
 @Serializable
 data class GroupDetailRoute(val groupId: String)
+
+@Serializable
+data class TodayRoute(val groupId: String)

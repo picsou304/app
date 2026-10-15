@@ -109,10 +109,12 @@ fun AppRoot(
     pendingInviteCode: String? = null,
     onClearPendingInviteCode: () -> Unit = {},
     authViewModel: AuthViewModel = hiltViewModel(),
-    groupViewModel: GroupViewModel = hiltViewModel()
+    groupViewModel: GroupViewModel = hiltViewModel(),
+    todayViewModel: com.dailyvlog.app.ui.today.TodayViewModel = hiltViewModel()
 ) {
     val authState by authViewModel.state.collectAsStateWithLifecycle()
     val groupState by groupViewModel.uiState.collectAsStateWithLifecycle()
+    val todayState by todayViewModel.uiState.collectAsStateWithLifecycle()
     val navController = rememberNavController()
     val context = LocalContext.current
 
@@ -151,6 +153,24 @@ fun AppRoot(
                     navController.popBackStack(HomeRoute, inclusive = false)
                 }
                 is GroupEffect.ShowToast -> {
+                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    // Today effects
+    LaunchedEffect(Unit) {
+        todayViewModel.effects.collect { effect ->
+            when (effect) {
+                is com.dailyvlog.app.ui.today.TodayEffect.NavigateToRecord -> {
+                    Toast.makeText(
+                        context,
+                        "Prêt pour l\'enregistrement vlog (Jalon M4) ! Durée max : ${effect.maxDuration}s",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                is com.dailyvlog.app.ui.today.TodayEffect.ShowToast -> {
                     Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
                 }
             }
@@ -299,6 +319,24 @@ fun AppRoot(
                 onDeleteGroup = { groupId ->
                     groupViewModel.deleteGroup(groupId)
                 },
+                onNavigateToToday = { gid ->
+                    navController.navigate(com.dailyvlog.app.ui.navigation.TodayRoute(gid))
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<com.dailyvlog.app.ui.navigation.TodayRoute> { backStackEntry ->
+            val route = backStackEntry.toRoute<com.dailyvlog.app.ui.navigation.TodayRoute>()
+            com.dailyvlog.app.ui.today.TodayScreen(
+                groupId = route.groupId,
+                state = todayState,
+                onLoadGroup = { todayViewModel.loadGroup(it) },
+                onRecordClicked = { todayViewModel.onRecordClicked() },
+                onSkipTurn = { todayViewModel.skipTurn() },
+                onAdvanceDay = { todayViewModel.advanceDay() },
+                onAdvanceHour = { todayViewModel.advanceHour() },
+                onResetClock = { todayViewModel.resetClock() },
                 onBack = { navController.popBackStack() }
             )
         }

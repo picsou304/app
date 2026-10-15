@@ -40,6 +40,14 @@
             </intent-filter>
         </activity>
 
+        <receiver
+            android:name=".core.receiver.DebugSwitchReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.dailyvlog.app.ACTION_TRIGGER_SWITCH" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>

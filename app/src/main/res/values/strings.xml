@@ -53,4 +53,24 @@
     <string name="leave_group">Quitter le groupe</string>
     <string name="delete_group">Supprimer le groupe</string>
     <string name="share_invite_text">Rejoins mon groupe \"%1$s\" sur Daily Vlog Crew : %2$s (Code : %3$s)</string>
+
+    <!-- Today screen strings -->
+    <string name="today_title">Aujourd\'hui</string>
+    <string name="countdown_label">Temps restant : %1$dh %2$02dm</string>
+    <string name="your_turn_title">C\'est ton tour aujourd\'hui ! 🎬</string>
+    <string name="your_turn_desc">C\'est à toi de capturer les moments du groupe. Prêt ?</string>
+    <string name="btn_record_vlog">Enregistrer mon vlog 🎥</string>
+    <string name="btn_skip_turn">Passer mon tour ⏭️</string>
+    <string name="skip_turn_confirm_title">Passer votre tour ?</string>
+    <string name="skip_turn_confirm_desc">Le membre suivant sera désigné immédiatement. Vous ne pouvez passer votre tour qu\'une seule fois par manche.</string>
+    <string name="waiting_vlog_title">En attente de @%1$s ⏳</string>
+    <string name="waiting_vlog_desc">Seul le membre désigné peut publier aujourd\'hui. Revenez plus tard pour voir son vlog !</string>
+    <string name="vlog_posted_title">Le vlog du jour est en ligne ! 🎉</string>
+    <string name="btn_watch_vlog">Regarder le vlog 👀</string>
+    <string name="debug_clock_title">⚙️ Simulation temporelle (DebugClock)</string>
+    <string name="btn_advance_day">+1 Jour (Bascule)</string>
+    <string name="btn_advance_hour">+1 Heure</string>
+    <string name="btn_reset_clock">Heure réelle</string>
+    <string name="round_info">Manche n°%1$d</string>
+    <string name="view_today_vlog">Voir le vlog du jour ☀️</string>
 </resources>
