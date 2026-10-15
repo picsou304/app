@@ -1,10 +1,10 @@
 package com.dailyvlog.app
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.VideoCameraFront
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -25,15 +26,34 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.dailyvlog.app.ui.auth.AuthEffect
+import com.dailyvlog.app.ui.auth.AuthUiState
+import com.dailyvlog.app.ui.auth.AuthViewModel
+import com.dailyvlog.app.ui.auth.LoginScreen
+import com.dailyvlog.app.ui.auth.RegisterScreen
+import com.dailyvlog.app.ui.home.HomeScreen
+import com.dailyvlog.app.ui.navigation.HomeRoute
+import com.dailyvlog.app.ui.navigation.LoginRoute
+import com.dailyvlog.app.ui.navigation.ProfileRoute
+import com.dailyvlog.app.ui.navigation.RegisterRoute
+import com.dailyvlog.app.ui.navigation.WelcomeRoute
+import com.dailyvlog.app.ui.profile.ProfileScreen
 import com.dailyvlog.app.ui.theme.DailyVlogCrewTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -44,26 +64,128 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             DailyVlogCrewTheme {
-                Scaffold(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .testTag("root_scaffold")
-                ) { innerPadding ->
-                    WelcomeScreen(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding)
-                    )
-                }
+                AppRoot()
             }
         }
     }
 }
 
 @Composable
-fun WelcomeScreen(modifier: Modifier = Modifier) {
+fun AppRoot(viewModel: AuthViewModel = hiltViewModel()) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val navController = rememberNavController()
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is AuthEffect.NavigateToHome -> {
+                    navController.navigate(HomeRoute) {
+                        popUpTo(WelcomeRoute) { inclusive = true }
+                    }
+                }
+                is AuthEffect.NavigateToWelcome -> {
+                    navController.navigate(WelcomeRoute) {
+                        popUpTo(HomeRoute) { inclusive = true }
+                    }
+                }
+                is AuthEffect.ShowMessage -> {
+                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    if (state is AuthUiState.Unauthenticated && (state as AuthUiState.Unauthenticated).isLoading) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            }
+        }
+        return
+    }
+
+    val startDestination = if (state is AuthUiState.Authenticated) HomeRoute else WelcomeRoute
+
+    NavHost(
+        navController = navController,
+        startDestination = startDestination
+    ) {
+        composable<WelcomeRoute> {
+            WelcomeScreen(
+                onNavigateToLogin = {
+                    viewModel.clearError()
+                    navController.navigate(LoginRoute)
+                },
+                onNavigateToRegister = {
+                    viewModel.clearError()
+                    navController.navigate(RegisterRoute)
+                }
+            )
+        }
+
+        composable<LoginRoute> {
+            LoginScreen(
+                state = state,
+                onLogin = { email, pass -> viewModel.login(email, pass) },
+                onNavigateToRegister = {
+                    viewModel.clearError()
+                    navController.navigate(RegisterRoute)
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<RegisterRoute> {
+            RegisterScreen(
+                state = state,
+                onRegister = { email, pass, confirm, pseudo ->
+                    viewModel.register(email, pass, confirm, pseudo)
+                },
+                onNavigateToLogin = {
+                    viewModel.clearError()
+                    navController.navigate(LoginRoute)
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<HomeRoute> {
+            HomeScreen(
+                user = state.user,
+                onNavigateToProfile = { navController.navigate(ProfileRoute) },
+                onLogout = { viewModel.logout() }
+            )
+        }
+
+        composable<ProfileRoute> {
+            ProfileScreen(
+                user = state.user,
+                onUpdatePseudo = { viewModel.updatePseudo(it) },
+                onLogout = { viewModel.logout() },
+                onBack = { navController.popBackStack() }
+            )
+        }
+    }
+}
+
+@Composable
+fun WelcomeScreen(
+    onNavigateToLogin: () -> Unit,
+    onNavigateToRegister: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Surface(
-        modifier = modifier.testTag("welcome_screen"),
+        modifier = modifier
+            .fillMaxSize()
+            .testTag("welcome_screen"),
         color = MaterialTheme.colorScheme.background
     ) {
         Column(
@@ -114,7 +236,7 @@ fun WelcomeScreen(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(48.dp))
 
             Button(
-                onClick = { /* Will navigate in M1 */ },
+                onClick = onNavigateToLogin,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
@@ -134,7 +256,7 @@ fun WelcomeScreen(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(12.dp))
 
             OutlinedButton(
-                onClick = { /* Will navigate in M1 */ },
+                onClick = onNavigateToRegister,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)

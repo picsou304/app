@@ -9,8 +9,8 @@
 | # | Milestone | Statut | Validation & Preuve ARTEMIS |
 |---|---|---|---|
 | **M0** | Pré-vol ARTEMIS + SDK/JDK + AVD + squelette Gradle/Hilt/Compose/CI | ✅ Validé | APK debug installé & lancé sur A015 (`00112352M000854`) ; UIAutomator & screenshot `tests/artemis/reports/m0_phone_screenshot.png` vérifiés sans crash |
-| **M1** | Design system M3, navigation, auth (Fake + interface Remote) | 🔄 En cours | Flash : inscription + connexion + déconnexion |
-| **M2** | Groupes : création, code d'invitation, deep link, rôles | ⏳ En attente | 2 devices (Téléphone physique A015 + Émulateur) : Alice crée, Bob rejoint |
+| **M1** | Design system M3, navigation, auth (Fake + interface Remote) | ✅ Validé | Tests 1 (connexion Alice), 2 (profil & déconnexion) et 3 (inscription) validés sur device physique A015 |
+| **M2** | Groupes : création, code d'invitation, deep link, rôles | 🔄 En cours | Création groupe, code 6 car., deep link `dailyvlog://join/<code>`, rôles |
 | **M3** | `DailyPickerEngine` + tests unitaires + écran « Aujourd'hui » + DebugClock | ⏳ En attente | JUnit 100 % vert ; Pro : désigné identique, bascule via intent debug |
 | **M4** | Enregistrement/import vidéo, compression 720p, upload WorkManager | ⏳ En attente | Pro strict : désigné publie, non-désigné bloqué |
 | **M5** | Fil, lecteur ExoPlayer, réactions emojis, commentaires, vu-par, streak | ⏳ En attente | Bob réagit & commente ; synchronisation temps réel vérifiée |
