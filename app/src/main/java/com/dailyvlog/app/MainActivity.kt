@@ -110,11 +110,13 @@ fun AppRoot(
     onClearPendingInviteCode: () -> Unit = {},
     authViewModel: AuthViewModel = hiltViewModel(),
     groupViewModel: GroupViewModel = hiltViewModel(),
-    todayViewModel: com.dailyvlog.app.ui.today.TodayViewModel = hiltViewModel()
+    todayViewModel: com.dailyvlog.app.ui.today.TodayViewModel = hiltViewModel(),
+    recordVlogViewModel: com.dailyvlog.app.ui.record.RecordVlogViewModel = hiltViewModel()
 ) {
     val authState by authViewModel.state.collectAsStateWithLifecycle()
     val groupState by groupViewModel.uiState.collectAsStateWithLifecycle()
     val todayState by todayViewModel.uiState.collectAsStateWithLifecycle()
+    val recordVlogState by recordVlogViewModel.uiState.collectAsStateWithLifecycle()
     val navController = rememberNavController()
     val context = LocalContext.current
 
@@ -164,13 +166,28 @@ fun AppRoot(
         todayViewModel.effects.collect { effect ->
             when (effect) {
                 is com.dailyvlog.app.ui.today.TodayEffect.NavigateToRecord -> {
-                    Toast.makeText(
-                        context,
-                        "Prêt pour l\'enregistrement vlog (Jalon M4) ! Durée max : ${effect.maxDuration}s",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    navController.navigate(
+                        com.dailyvlog.app.ui.navigation.RecordVlogRoute(
+                            groupId = effect.groupId,
+                            maxDurationSeconds = effect.maxDuration
+                        )
+                    )
                 }
                 is com.dailyvlog.app.ui.today.TodayEffect.ShowToast -> {
+                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    // Record Vlog effects
+    LaunchedEffect(Unit) {
+        recordVlogViewModel.effects.collect { effect ->
+            when (effect) {
+                is com.dailyvlog.app.ui.record.RecordVlogEffect.VlogPublished -> {
+                    navController.popBackStack()
+                }
+                is com.dailyvlog.app.ui.record.RecordVlogEffect.ShowToast -> {
                     Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
                 }
             }
@@ -337,6 +354,23 @@ fun AppRoot(
                 onAdvanceDay = { todayViewModel.advanceDay() },
                 onAdvanceHour = { todayViewModel.advanceHour() },
                 onResetClock = { todayViewModel.resetClock() },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<com.dailyvlog.app.ui.navigation.RecordVlogRoute> { backStackEntry ->
+            val route = backStackEntry.toRoute<com.dailyvlog.app.ui.navigation.RecordVlogRoute>()
+            com.dailyvlog.app.ui.record.RecordVlogScreen(
+                groupId = route.groupId,
+                maxDurationSeconds = route.maxDurationSeconds,
+                state = recordVlogState,
+                onMaxDurationInit = { recordVlogViewModel.setMaxDuration(it) },
+                onRecordingStarted = { recordVlogViewModel.onRecordingStarted() },
+                onRecordingTick = { recordVlogViewModel.onRecordingTick(it) },
+                onVideoReady = { uri, duration -> recordVlogViewModel.onVideoReady(uri, duration) },
+                onCaptionChanged = { recordVlogViewModel.onCaptionChanged(it) },
+                onRetake = { recordVlogViewModel.onRetake() },
+                onPublish = { recordVlogViewModel.publishVlog(it) },
                 onBack = { navController.popBackStack() }
             )
         }

@@ -73,4 +73,20 @@
     <string name="btn_reset_clock">Heure réelle</string>
     <string name="round_info">Manche n°%1$d</string>
     <string name="view_today_vlog">Voir le vlog du jour ☀️</string>
+
+    <!-- Recording and Preview strings -->
+    <string name="record_vlog_title">Enregistrer mon vlog</string>
+    <string name="camera_permission_title">Accès Caméra &amp; Micro</string>
+    <string name="camera_permission_desc">Pour capturer votre vlog quotidien, nous avons besoin de votre permission pour utiliser la caméra et le microphone.</string>
+    <string name="btn_grant_permissions">Autoriser la caméra</string>
+    <string name="recording_in_progress">Enregistrement en cours</string>
+    <string name="preview_vlog_title">Aperçu du vlog</string>
+    <string name="caption_label">Légende (max 140 car.)</string>
+    <string name="caption_placeholder">Une anecdote sur ce vlog ?</string>
+    <string name="btn_retake">Refaire</string>
+    <string name="btn_publish">Publier le vlog 🚀</string>
+    <string name="btn_import_gallery">Galerie</string>
+    <string name="compression_notice">Optimisation H.264 720p avant envoi</string>
+    <string name="publishing_vlog">Publication de votre vlog...</string>
+    <string name="vlog_published_success">Vlog publié avec succès !</string>
 </resources>
